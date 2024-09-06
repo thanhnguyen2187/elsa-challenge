@@ -44,3 +44,30 @@ Welcome to the Real-Time Quiz coding challenge! Your task is to create a technic
    - **Reliability**: Your component should be reliable and handle errors gracefully. Consider how you can make your component resilient to failures.
    - **Maintainability**: Your code should be clean, well-organized, and easy to maintain. Consider how you can make it easy for other developers to understand and modify your code.
    - **Monitoring and Observability**: Discuss how you would monitor the performance of your component and diagnose issues. Consider how you can make your component observable.
+
+## Submission Guidelines
+
+Candidates are required to submit the following as part of the coding challenge:
+
+1. **System Design Documents**:
+   - **Architecture Diagram**: Illustrate the interaction of system components (server, client applications, database, etc.).
+   - **Component Descriptions**: Explain the role of each component.
+   - **Data Flow**: Describe how data flows from user participation to leaderboard updates.
+   - **Technology Justification**: List the chosen technologies and justify why they were selected.
+
+2. **Working Code**:
+   - Choose one of the core components mentioned in the requirements and implement it using your preferred technologies. The rest of the system can be mocked using appropriate mock services or data.
+   - Ensure the code meets criteria such as scalability, performance, reliability, maintainability, and observability.
+
+3. **Video Submission**:
+   - Record a short video (5-10 minutes) where you address the following:
+     - **Introduction**: Introduce yourself and state your name.
+     - **Assignment Overview**: Describe the technical assignment that ELSA gave in your own words. Feel free to mention any assumptions or clarifications you made.
+     - **Solution Overview**: Provide a crisp overview of your solution, highlighting key design and implementation elements.
+     - **Demo**: Run the code on your local machine and walk us through the output or any tests you’ve written to verify the functionality.
+     - **Conclusion**: Conclude with any remarks, such as challenges faced, learnings, or further improvements you would make.
+
+   **Video Requirements**:
+   - The video must be between **5-10 minutes**. Any submission beyond 10 minutes will be rejected upfront.
+   - Use any recording device (smartphone, webcam, etc.), ensuring good audio and video quality.
+   - Ensure clear and concise communication.
