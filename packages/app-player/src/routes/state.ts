@@ -8,6 +8,7 @@ export namespace Context {
   export type Question = {
     title: string;
     description: string;
+    timeMs: number;
     answers: Answer[];
   };
 
@@ -16,6 +17,7 @@ export namespace Context {
     playerCount: number;
     questions: Question[];
     questionIndex: number;
+    elapsedMs: number;
   };
 
   export const initial: Type = {
@@ -25,6 +27,7 @@ export namespace Context {
       {
         title: "What is the capital of France?",
         description: "",
+        timeMs: 30_000,
         answers: [
           { text: "Paris" },
           { text: "Lyon" },
@@ -35,6 +38,7 @@ export namespace Context {
       {
         title: "What is the capital of Germany?",
         description: "",
+        timeMs: 30_000,
         answers: [
           { text: "Berlin" },
           { text: "Munich" },
@@ -45,6 +49,7 @@ export namespace Context {
       {
         title: "What is the capital of Italy?",
         description: "",
+        timeMs: 30_000,
         answers: [
           { text: "Rome" },
           { text: "Milan" },
@@ -54,6 +59,7 @@ export namespace Context {
       },
     ],
     questionIndex: 0,
+    elapsedMs: 0,
   };
 }
 
@@ -99,7 +105,7 @@ export const machine = setup({
   actors: Actor.map,
 }).createMachine({
   id: "Counter",
-  initial: "ServerChecking",
+  initial: "Playing",
   context: Context.initial,
   states: {
     ServerChecking: {

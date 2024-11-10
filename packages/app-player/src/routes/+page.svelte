@@ -13,22 +13,22 @@ const playerCount = $derived(actor.state.context.playerCount);
 const questions = $derived(actor.state.context.questions);
 const questionIndex = $derived(actor.state.context.questionIndex);
 
-setTimeout(() => {
-  actor.ref.send({ type: "ServerReady" });
-  actor.ref.send({ type: "SetDisplayName", value: "Player 1" });
-}, 3_000);
-
-setTimeout(() => {
-  actor.ref.send({ type: "SetPlayerCount", value: 2 });
-}, 5_000);
-
-setTimeout(() => {
-  actor.ref.send({ type: "SetPlayerCount", value: 4 });
-}, 7_000);
-
-setTimeout(() => {
-  actor.ref.send({ type: "GameStart" });
-}, 10_000);
+// setTimeout(() => {
+//   actor.ref.send({ type: "ServerReady" });
+//   actor.ref.send({ type: "SetDisplayName", value: "Player 1" });
+// }, 1_000);
+//
+// setTimeout(() => {
+//   actor.ref.send({ type: "SetPlayerCount", value: 2 });
+// }, 1_500);
+//
+// setTimeout(() => {
+//   actor.ref.send({ type: "SetPlayerCount", value: 4 });
+// }, 3_500);
+//
+// setTimeout(() => {
+//   actor.ref.send({ type: "GameStart" });
+// }, 5_000);
 
 function handleChangeDisplayName(event: Event) {
   if (!isWaiting) return;
@@ -41,15 +41,21 @@ function handleChangeDisplayName(event: Event) {
 <div class="container mx-auto p-4 max-w-md h-[40em]">
   <div class="card bg-base-300 shadow-xl h-full">
     <div class="card-body justify-between items-center text-center">
-      <h2 class="card-title text-2xl">
-        {#if isServerChecking}
-          Checking for Server
-        {:else if isWaiting}
-          Waiting for Host and Players
-        {:else if isPlaying}
-          Question {questionIndex + 1}/{questions.length}
+      <h2 class="card-title text-2xl flex-col">
+        <span>
+          {#if isServerChecking}
+            Checking for Server
+          {:else if isWaiting}
+            Waiting for Host and Players
+          {:else if isPlaying}
+            Question {questionIndex + 1}/{questions.length}
+          {/if}
+        </span>
+        {#if isPlaying}
+          <progress class="progress progress-primary" value="0" max="1000"></progress>
         {/if}
       </h2>
+
       {#if isServerChecking || isWaiting}
         <div
           class="animate-spin rounded-full h-16 w-16 border-b-2 border-primary"
@@ -77,6 +83,8 @@ function handleChangeDisplayName(event: Event) {
             </div>
           </div>
         </div>
+      {:else if isPlaying}
+        Hello world
       {/if}
     </div>
   </div>
