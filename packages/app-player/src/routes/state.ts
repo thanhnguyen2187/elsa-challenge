@@ -2,24 +2,36 @@ import { assign, fromPromise, setup } from "xstate";
 
 export namespace Context {
   export type Type = {
-    count: number;
+    displayName: string;
+    playerCount: number;
   };
 
   export const initial: Type = {
-    count: 0,
+    displayName: "...",
+    playerCount: 1,
   };
 }
 
 export namespace Event {
-  export type Increment = {
-    type: "Increment";
+  export type ServerReady = {
+    type: "ServerReady";
   };
 
-  export type Decrement = {
-    type: "Decrement";
+  export type SetDisplayName = {
+    type: "SetDisplayName";
+    value: string;
   };
 
-  export type All = Increment | Decrement;
+  export type SetPlayerCount = {
+    type: "SetPlayerCount";
+    value: number;
+  };
+
+  export type GameStart = {
+    type: "GameStart";
+  };
+
+  export type All = ServerReady | SetDisplayName | SetPlayerCount | GameStart;
 }
 
 export namespace Actor {
@@ -42,33 +54,31 @@ export const machine = setup({
   actors: Actor.map,
 }).createMachine({
   id: "Counter",
-  initial: "Idling",
+  initial: "ServerChecking",
   context: Context.initial,
   states: {
-    Idling: {},
-    AsyncIncreasing: {
-      invoke: {
-        input: ({ context }) => context.count,
-        src: "asyncIncrement",
-        onDone: {
-          target: "Idling",
-          actions: assign({
-            count: ({ context, event }) => event.output,
-          }),
-        },
+    ServerChecking: {
+      on: {
+        ServerReady: "Waiting",
       },
     },
-  },
-  on: {
-    Increment: {
-      actions: assign({
-        count: ({ context }) => context.count + 1,
-      }),
+    Waiting: {
+      on: {
+        SetDisplayName: {
+          actions: assign({
+            displayName: ({ event }) => event.value,
+          }),
+        },
+        SetPlayerCount: {
+          actions: assign({
+            playerCount: ({ event }) => event.value,
+          }),
+        },
+        GameStart: "Playing",
+      },
     },
-    Decrement: {
-      actions: assign({
-        count: ({ context }) => context.count - 1,
-      }),
-    },
+    Playing: {},
+    Leaderboard: {},
   },
+  on: {},
 });
