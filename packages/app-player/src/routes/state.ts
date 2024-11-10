@@ -1,14 +1,59 @@
 import { assign, fromPromise, setup } from "xstate";
 
 export namespace Context {
+  export type Answer = {
+    text: string;
+  };
+
+  export type Question = {
+    title: string;
+    description: string;
+    answers: Answer[];
+  };
+
   export type Type = {
     displayName: string;
     playerCount: number;
+    questions: Question[];
+    questionIndex: number;
   };
 
   export const initial: Type = {
     displayName: "...",
     playerCount: 1,
+    questions: [
+      {
+        title: "What is the capital of France?",
+        description: "",
+        answers: [
+          { text: "Paris" },
+          { text: "Lyon" },
+          { text: "Marseille" },
+          { text: "Toulouse" },
+        ],
+      },
+      {
+        title: "What is the capital of Germany?",
+        description: "",
+        answers: [
+          { text: "Berlin" },
+          { text: "Munich" },
+          { text: "Cologne" },
+          { text: "Frankfurt" },
+        ],
+      },
+      {
+        title: "What is the capital of Italy?",
+        description: "",
+        answers: [
+          { text: "Rome" },
+          { text: "Milan" },
+          { text: "Naples" },
+          { text: "Turin" },
+        ],
+      },
+    ],
+    questionIndex: 0,
   };
 }
 

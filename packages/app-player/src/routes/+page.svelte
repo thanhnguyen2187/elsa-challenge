@@ -10,6 +10,8 @@ const isWaiting = $derived(actor.state.value.match("Waiting"));
 const isPlaying = $derived(actor.state.value.match("Playing"));
 const displayName = $derived(actor.state.context.displayName);
 const playerCount = $derived(actor.state.context.playerCount);
+const questions = $derived(actor.state.context.questions);
+const questionIndex = $derived(actor.state.context.questionIndex);
 
 setTimeout(() => {
   actor.ref.send({ type: "ServerReady" });
@@ -45,7 +47,7 @@ function handleChangeDisplayName(event: Event) {
         {:else if isWaiting}
           Waiting for Host and Players
         {:else if isPlaying}
-          Let's play!
+          Question {questionIndex + 1}/{questions.length}
         {/if}
       </h2>
       {#if isServerChecking || isWaiting}
