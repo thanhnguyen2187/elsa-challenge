@@ -4,14 +4,18 @@ import { machine } from "./state";
 import { wrap } from "$lib/xstate-wrapper.svelte";
 
 const actor = wrap(createActor(machine));
-const allowEnterName = $derived(actor.state.value.match("Waiting"));
-const isServerChecking = $derived(actor.state.value.match("ServerChecking"));
-const isWaiting = $derived(actor.state.value.match("Waiting"));
-const isPlaying = $derived(actor.state.value.match("Playing"));
+const allowEnterName = $derived(actor.state.matches("Waiting"));
+const isServerChecking = $derived(actor.state.matches("ServerChecking"));
+const isWaiting = $derived(actor.state.matches("Waiting"));
+const isPlaying = $derived(actor.state.matches("Playing"));
+const isLeaderboard = $derived(actor.state.matches("Leaderboard"));
+
 const displayName = $derived(actor.state.context.displayName);
 const playerCount = $derived(actor.state.context.playerCount);
 const questions = $derived(actor.state.context.questions);
 const questionIndex = $derived(actor.state.context.questionIndex);
+const questionCurrent = $derived(questions[questionIndex]);
+const elapsedMs = $derived(actor.state.context.elapsedMs);
 
 // setTimeout(() => {
 //   actor.ref.send({ type: "ServerReady" });
@@ -30,6 +34,10 @@ const questionIndex = $derived(actor.state.context.questionIndex);
 //   actor.ref.send({ type: "GameStart" });
 // }, 5_000);
 
+setTimeout(() => {
+  actor.ref.send({ type: "Completed" });
+}, 3_000);
+
 function handleChangeDisplayName(event: Event) {
   if (!isWaiting) return;
   const target = event.target as HTMLInputElement;
@@ -41,7 +49,7 @@ function handleChangeDisplayName(event: Event) {
 <div class="container mx-auto p-4 max-w-md h-[40em]">
   <div class="card bg-base-300 shadow-xl h-full">
     <div class="card-body justify-between items-center text-center">
-      <h2 class="card-title text-2xl flex-col">
+      <h2 class="card-title text-2xl flex-col w-full">
         <span>
           {#if isServerChecking}
             Checking for Server
@@ -49,10 +57,21 @@ function handleChangeDisplayName(event: Event) {
             Waiting for Host and Players
           {:else if isPlaying}
             Question {questionIndex + 1}/{questions.length}
+          {:else if isLeaderboard}
+            Leaderboard <br/>
           {/if}
         </span>
+        {#if isLeaderboard}
+          <div class="badge">
+            Question {questionIndex + 1}/{questions.length}
+          </div>
+        {/if}
         {#if isPlaying}
-          <progress class="progress progress-primary" value="0" max="1000"></progress>
+          <progress
+            class="progress progress-primary"
+            value={elapsedMs}
+            max={questionCurrent.timeMs}
+          ></progress>
         {/if}
       </h2>
 
@@ -84,7 +103,20 @@ function handleChangeDisplayName(event: Event) {
           </div>
         </div>
       {:else if isPlaying}
-        Hello world
+        <div class="prose h-[20em] w-full">
+          <h3>{questionCurrent.title}</h3>
+          <p>{questionCurrent.description ? questionCurrent.description : "[No description yet]"}</p>
+        </div>
+        <div class="grid grid-cols-2 gap-4 w-full">
+          {#each questionCurrent.answers as answer}
+            <button
+              class="btn btn-outline"
+            >
+              {answer.text}
+            </button>
+          {/each}
+
+        </div>
       {/if}
     </div>
   </div>
