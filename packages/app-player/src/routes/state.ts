@@ -16,19 +16,36 @@ export namespace Context {
     answers: Answer[];
   };
 
+  export type Player = {
+    id: string;
+    displayName: string;
+    score: number;
+  };
+
   export type Type = {
-    playerId: string;
+    playerCurrent: Player;
     displayName: string;
     playerCount: number;
+    playersMap: Map<string, Player>;
     questions: Question[];
     questionIndex: number;
     elapsedMs: number;
   };
 
   export const initial: Type = {
-    playerId: "1", // should be an UUID later
+    playerCurrent: {
+      id: "1",
+      displayName: "...",
+      score: 0,
+    },
     displayName: "...",
     playerCount: 1,
+    playersMap: new Map([
+      ["1", { id: "1", displayName: "Player 1", score: 0 }],
+      ["2", { id: "2", displayName: "Player 2", score: 0 }],
+      ["3", { id: "3", displayName: "Player 3", score: 0 }],
+      ["4", { id: "4", displayName: "Player 4", score: 0 }],
+    ]),
     questions: [
       {
         title: "What is the capital of France?",
@@ -100,6 +117,16 @@ export namespace Event {
     type: "Continue";
   };
 
+  export type SetPlayerScore = {
+    type: "SetPlayerScore";
+    id: string;
+    value: number;
+  };
+
+  export type Finish = {
+    type: "Finish";
+  }
+
   export type All =
     | ServerReady
     | SetDisplayName
@@ -107,7 +134,9 @@ export namespace Event {
     | GameStart
     | Next
     | Completed
-    | Continue;
+    | Continue
+    | SetPlayerScore
+    | Finish;
 }
 
 export namespace Actor {
@@ -132,6 +161,7 @@ export const machine = setup({
   id: "Global",
   initial: "Playing",
   // initial: "Waiting",
+  // initial: "Leaderboard",
   context: Context.initial,
   states: {
     ServerChecking: {
@@ -143,7 +173,10 @@ export const machine = setup({
       on: {
         SetDisplayName: {
           actions: assign({
-            displayName: ({ event }) => event.value,
+            playerCurrent: ({ context, event }) => ({
+              ...context.playerCurrent,
+              displayName: event.value,
+            }),
           }),
         },
         SetPlayerCount: {
@@ -158,10 +191,22 @@ export const machine = setup({
       initial: "Ticking",
       on: {
         Completed: {
-          actions: assign({
-            questionIndex: ({ context }) => context.questionIndex + 1,
-          }),
           target: "Leaderboard",
+        },
+        SetPlayerScore: {
+          actions: assign({
+            playersMap: ({ context, event }) => {
+              const playersMap = new Map(context.playersMap);
+              const player = playersMap.get(event.id);
+              if (player) {
+                playersMap.set(event.id, {
+                  ...player,
+                  score: event.value,
+                });
+              }
+              return playersMap;
+            },
+          }),
         },
       },
       states: {
@@ -187,9 +232,17 @@ export const machine = setup({
     },
     Leaderboard: {
       on: {
-        Continue: "Playing",
+        Continue: {
+          actions: assign({
+            questionIndex: ({ context }) => context.questionIndex + 1,
+            elapsedMs: 0,
+          }),
+          target: "Playing",
+        },
+        Finish: "Final",
       },
     },
+    Final: {},
   },
   on: {},
 });
