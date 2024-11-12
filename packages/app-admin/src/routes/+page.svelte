@@ -3,13 +3,15 @@
     <div class="card-body justify-between items-center text-center">
       <h2 class="card-title text-2xl flex-col w-full">
         <span>
-          Hello world
+          Checking for Server
         </span>
       </h2>
-
-      <div>Play the game</div>
-
-      <div>Goodbye world</div>
+      <div
+        class="animate-spin rounded-full h-16 w-16 border-b-2 border-primary"
+      ></div>
+      <div
+        class="h-[11.5em]"
+      ></div>
     </div>
   </div>
 </div>
