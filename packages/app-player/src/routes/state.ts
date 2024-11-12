@@ -159,8 +159,8 @@ export const machine = setup({
   actors: Actor.map,
 }).createMachine({
   id: "Global",
-  initial: "Playing",
-  // initial: "Waiting",
+  initial: "Waiting",
+  // initial: "Playing",
   // initial: "Leaderboard",
   context: Context.initial,
   states: {
@@ -193,6 +193,7 @@ export const machine = setup({
         Completed: {
           target: "Leaderboard",
         },
+        Finish: "Final",
         SetPlayerScore: {
           actions: assign({
             playersMap: ({ context, event }) => {

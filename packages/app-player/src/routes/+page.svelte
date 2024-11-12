@@ -23,36 +23,24 @@ const players = $derived(
   ),
 );
 
-// setTimeout(() => {
-//   actor.ref.send({ type: "ServerReady" });
-//   actor.ref.send({ type: "SetDisplayName", value: "Player 1" });
-// }, 1_000);
-// setTimeout(() => {
-//   actor.ref.send({ type: "SetPlayerCount", value: 2 });
-// }, 1_500);
-// setTimeout(() => {
-//   actor.ref.send({ type: "SetPlayerCount", value: 4 });
-// }, 3_500);
-// setTimeout(() => {
-//   actor.ref.send({ type: "GameStart" });
-// }, 5_000);
+setTimeout(() => {
+  actor.ref.send({ type: "ServerReady" });
+  actor.ref.send({ type: "SetDisplayName", value: "Player 1" });
+}, 1_000);
+setTimeout(() => {
+  actor.ref.send({ type: "SetPlayerCount", value: 2 });
+}, 1_500);
+setTimeout(() => {
+  actor.ref.send({ type: "SetPlayerCount", value: 4 });
+}, 3_500);
+setTimeout(() => {
+  actor.ref.send({ type: "GameStart" });
+}, 5_000);
 
 setTimeout(() => {
   actor.ref.send({ type: "SetPlayerScore", id: "1", value: 10 });
   actor.ref.send({ type: "SetPlayerScore", id: "2", value: 15 });
   actor.ref.send({ type: "SetPlayerScore", id: "3", value: 10 });
-}, 1_000);
-setTimeout(() => {
-  actor.ref.send({ type: "Completed" });
-}, 2_000);
-
-setTimeout(() => {
-  actor.ref.send({ type: "Continue" });
-}, 5_000);
-setTimeout(() => {
-  actor.ref.send({ type: "SetPlayerScore", id: "1", value: 19 });
-  actor.ref.send({ type: "SetPlayerScore", id: "2", value: 24 });
-  actor.ref.send({ type: "SetPlayerScore", id: "3", value: 20 });
 }, 6_000);
 setTimeout(() => {
   actor.ref.send({ type: "Completed" });
@@ -60,14 +48,23 @@ setTimeout(() => {
 
 setTimeout(() => {
   actor.ref.send({ type: "Continue" });
+}, 8_000);
+setTimeout(() => {
+  actor.ref.send({ type: "SetPlayerScore", id: "1", value: 19 });
+  actor.ref.send({ type: "SetPlayerScore", id: "2", value: 24 });
+  actor.ref.send({ type: "SetPlayerScore", id: "3", value: 20 });
+}, 9_000);
+setTimeout(() => {
+  actor.ref.send({ type: "Completed" });
 }, 10_000);
+
+setTimeout(() => {
+  actor.ref.send({ type: "Continue" });
+}, 11_000);
 setTimeout(() => {
   actor.ref.send({ type: "SetPlayerScore", id: "1", value: 29 });
   actor.ref.send({ type: "SetPlayerScore", id: "2", value: 24 });
   actor.ref.send({ type: "SetPlayerScore", id: "3", value: 20 });
-}, 11_000);
-setTimeout(() => {
-  actor.ref.send({ type: "Completed" });
 }, 12_000);
 setTimeout(() => {
   actor.ref.send({ type: "Finish" });
