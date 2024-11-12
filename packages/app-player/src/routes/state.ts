@@ -1,29 +1,12 @@
 import { assign, fromPromise, setup } from "xstate";
+import type { Answer, Player, Question } from "shared/domain";
+import { sampleQuestions } from "shared/domain";
 
 export namespace Constant {
   export const TickMs = 500;
 }
 
 export namespace Context {
-  export type Answer = {
-    id: string;
-    text: string;
-  };
-
-  export type Question = {
-    id: string;
-    title: string;
-    description: string;
-    timeMs: number;
-    answers: Answer[];
-  };
-
-  export type Player = {
-    id: string;
-    displayName: string;
-    score: number;
-  };
-
   export type Type = {
     playerCurrent: Player;
     displayName: string;
@@ -49,44 +32,7 @@ export namespace Context {
       ["3", { id: "3", displayName: "Player 3", score: 0 }],
       ["4", { id: "4", displayName: "Player 4", score: 0 }],
     ]),
-    questions: [
-      {
-        id: "1",
-        title: "What is the capital of France?",
-        description: "",
-        timeMs: 10_000,
-        answers: [
-          { id: "1", text: "Paris" },
-          { id: "2", text: "Lyon" },
-          { id: "3", text: "Marseille" },
-          { id: "4", text: "Toulouse" },
-        ],
-      },
-      {
-        id: "2",
-        title: "What is the capital of Germany?",
-        description: "",
-        timeMs: 10_000,
-        answers: [
-          { id: "1", text: "Berlin" },
-          { id: "2", text: "Munich" },
-          { id: "3", text: "Cologne" },
-          { id: "4", text: "Frankfurt" },
-        ],
-      },
-      {
-        id: "3",
-        title: "What is the capital of Italy?",
-        description: "",
-        timeMs: 10_000,
-        answers: [
-          { id: "1", text: "Rome" },
-          { id: "2", text: "Milan" },
-          { id: "3", text: "Naples" },
-          { id: "4", text: "Turin" },
-        ],
-      },
-    ],
+    questions: sampleQuestions,
     questionIndex: 0,
     questionsAnswered: new Map(),
     elapsedMs: 0,
@@ -138,7 +84,7 @@ export namespace Event {
 
   export type Finish = {
     type: "Finish";
-  }
+  };
 
   export type All =
     | ServerReady

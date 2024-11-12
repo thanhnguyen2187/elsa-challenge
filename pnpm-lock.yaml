@@ -14,6 +14,9 @@ importers:
 
   packages/app-admin:
     dependencies:
+      shared:
+        specifier: workspace:*
+        version: link:../shared
       xstate:
         specifier: ^5.18.2
         version: 5.18.2
