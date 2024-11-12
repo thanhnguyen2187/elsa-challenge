@@ -16,6 +16,7 @@ const playerCount = $derived(actor.state.context.playerCount);
 const questions = $derived(actor.state.context.questions);
 const questionIndex = $derived(actor.state.context.questionIndex);
 const questionCurrent = $derived(questions[questionIndex]);
+const questionsAnswered = $derived(actor.state.context.questionsAnswered);
 const elapsedMs = $derived(actor.state.context.elapsedMs);
 const players = $derived(
   Array.from(actor.state.context.playersMap.values()).sort(
@@ -75,6 +76,11 @@ function handleChangeDisplayName(event: Event) {
   const target = event.target as HTMLInputElement;
   const value = target.value;
   actor.ref.send({ type: "SetDisplayName", value });
+}
+
+function handleAnswerPicked(questionId: string, answerId: string) {
+  if (!isPlaying) return;
+  actor.ref.send({ type: "AnswerPicked", questionId, answerId });
 }
 </script>
 
@@ -149,8 +155,15 @@ function handleChangeDisplayName(event: Event) {
           {#each questionCurrent.answers as answer}
             <button
               class="btn btn-outline"
+              disabled={!!questionsAnswered.get(questionCurrent.id)}
+              onclick={() => handleAnswerPicked(questionCurrent.id, answer.id)}
             >
               {answer.text}
+              {#if questionsAnswered.get(questionCurrent.id) === answer.id}
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
+                </svg>
+              {/if}
             </button>
           {/each}
         </div>

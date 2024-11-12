@@ -6,10 +6,12 @@ export namespace Constant {
 
 export namespace Context {
   export type Answer = {
+    id: string;
     text: string;
   };
 
   export type Question = {
+    id: string;
     title: string;
     description: string;
     timeMs: number;
@@ -29,6 +31,7 @@ export namespace Context {
     playersMap: Map<string, Player>;
     questions: Question[];
     questionIndex: number;
+    questionsAnswered: Map<string, string>;
     elapsedMs: number;
   };
 
@@ -48,40 +51,44 @@ export namespace Context {
     ]),
     questions: [
       {
+        id: "1",
         title: "What is the capital of France?",
         description: "",
         timeMs: 10_000,
         answers: [
-          { text: "Paris" },
-          { text: "Lyon" },
-          { text: "Marseille" },
-          { text: "Toulouse" },
+          { id: "1", text: "Paris" },
+          { id: "2", text: "Lyon" },
+          { id: "3", text: "Marseille" },
+          { id: "4", text: "Toulouse" },
         ],
       },
       {
+        id: "2",
         title: "What is the capital of Germany?",
         description: "",
         timeMs: 10_000,
         answers: [
-          { text: "Berlin" },
-          { text: "Munich" },
-          { text: "Cologne" },
-          { text: "Frankfurt" },
+          { id: "1", text: "Berlin" },
+          { id: "2", text: "Munich" },
+          { id: "3", text: "Cologne" },
+          { id: "4", text: "Frankfurt" },
         ],
       },
       {
+        id: "3",
         title: "What is the capital of Italy?",
         description: "",
         timeMs: 10_000,
         answers: [
-          { text: "Rome" },
-          { text: "Milan" },
-          { text: "Naples" },
-          { text: "Turin" },
+          { id: "1", text: "Rome" },
+          { id: "2", text: "Milan" },
+          { id: "3", text: "Naples" },
+          { id: "4", text: "Turin" },
         ],
       },
     ],
     questionIndex: 0,
+    questionsAnswered: new Map(),
     elapsedMs: 0,
   };
 }
@@ -103,6 +110,12 @@ export namespace Event {
 
   export type GameStart = {
     type: "GameStart";
+  };
+
+  export type AnswerPicked = {
+    type: "AnswerPicked";
+    questionId: string;
+    answerId: string;
   };
 
   export type Next = {
@@ -132,6 +145,7 @@ export namespace Event {
     | SetDisplayName
     | SetPlayerCount
     | GameStart
+    | AnswerPicked
     | Next
     | Completed
     | Continue
@@ -206,6 +220,15 @@ export const machine = setup({
                 });
               }
               return playersMap;
+            },
+          }),
+        },
+        AnswerPicked: {
+          actions: assign({
+            questionsAnswered: ({ context, event }) => {
+              const questionsAnswered = new Map(context.questionsAnswered);
+              questionsAnswered.set(event.questionId, event.answerId);
+              return questionsAnswered;
             },
           }),
         },
