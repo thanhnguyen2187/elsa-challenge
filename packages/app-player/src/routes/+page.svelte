@@ -1,7 +1,7 @@
 <script lang="ts">
 import { createActor } from "xstate";
 import { machine } from "./state";
-import { wrap } from "$lib/xstate-wrapper.svelte";
+import { wrap } from "shared/xstate-wrapper.svelte";
 
 const actor = wrap(createActor(machine));
 const allowEnterName = $derived(actor.state.matches("Waiting"));
@@ -9,7 +9,7 @@ const isServerChecking = $derived(actor.state.matches("ServerChecking"));
 const isWaiting = $derived(actor.state.matches("Waiting"));
 const isPlaying = $derived(actor.state.matches("Playing"));
 const isLeaderboard = $derived(actor.state.matches("Leaderboard"));
-const isFinal = $derived(actor.state.matches("Final"))
+const isFinal = $derived(actor.state.matches("Final"));
 
 const playerCurrent = $derived(actor.state.context.playerCurrent);
 const playerCount = $derived(actor.state.context.playerCount);
