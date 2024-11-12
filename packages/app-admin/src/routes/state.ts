@@ -72,7 +72,17 @@ export namespace Event {
     type: "Finish";
   };
 
-  export type All = ServerReady | PlayerJoined | GameStart | Continue | Finish;
+  export type Restart = {
+    type: "Restart";
+  };
+
+  export type All =
+    | ServerReady
+    | PlayerJoined
+    | GameStart
+    | Continue
+    | Finish
+    | Restart;
 }
 
 export namespace Guard {
@@ -82,6 +92,12 @@ export namespace Guard {
     return context.questionIndex < context.questions.length - 1;
   }
 
+  export function allowStartGame({
+    context,
+  }: { context: Context.Type }): boolean {
+    return context.playersMap.size >= 1;
+  }
+
   export function isFinalQuestion({
     context,
   }: { context: Context.Type }): boolean {
@@ -89,6 +105,7 @@ export namespace Guard {
   }
 
   export const map = {
+    allowStartGame,
     allowContinue,
     isFinalQuestion,
   };
@@ -135,7 +152,10 @@ export const machine = setup({
             },
           }),
         },
-        GameStart: State.Playing,
+        GameStart: {
+          target: State.Playing,
+          guard: "allowStartGame",
+        },
       },
     },
     [State.Playing]: {
@@ -172,7 +192,7 @@ export const machine = setup({
             {
               guard: "isFinalQuestion",
               target: State.generate([State.Final]),
-            }
+            },
           ],
         },
       },
@@ -187,7 +207,17 @@ export const machine = setup({
         },
       },
     },
-    [State.Final]: {},
+    [State.Final]: {
+      on: {
+        Restart: {
+          target: State.Waiting,
+          actions: assign({
+            questionIndex: () => 0,
+            playersMap: () => new Map(),
+            elapsedMs: () => 0,
+          }),
+        },
+      },
+    },
   },
-  on: {},
 });

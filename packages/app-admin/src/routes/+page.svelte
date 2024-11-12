@@ -13,6 +13,9 @@ const isLeaderboard = $derived(actor.state.matches("Leaderboard"));
 const isFinal = $derived(actor.state.matches("Final"));
 const elapsedMs = $derived(actor.state.context.elapsedMs);
 
+const allowContinue = $derived(Guard.allowContinue({ context }));
+const allowStartGame = $derived(Guard.allowStartGame({ context }));
+
 const players = $derived(Array.from(actor.state.context.playersMap.values()));
 const questions = $derived(actor.state.context.questions);
 const questionIndex = $derived(actor.state.context.questionIndex);
@@ -62,7 +65,7 @@ function handleContinue() {
 }
 
 function handleRestart() {
-  if (!isLeaderboard) return;
+  if (!isFinal) return;
   actor.ref.send({ type: "Restart" });
 }
 </script>
@@ -118,7 +121,10 @@ function handleRestart() {
           <button
             class="btn btn-primary"
             onclick={handleStart}
-          >Start</button>
+            disabled={!allowStartGame}
+          >
+            Start
+          </button>
         </div>
       {:else if isPlaying}
         <div class="prose h-[20em] w-full">
@@ -157,8 +163,7 @@ function handleRestart() {
           </table>
         </div>
         <div class="h-[7em]">
-
-          {#if Guard.allowContinue({ context })}
+          {#if allowContinue}
             <button
               class="btn btn-primary"
               onclick={handleContinue}
