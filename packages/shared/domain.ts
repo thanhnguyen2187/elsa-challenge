@@ -1,3 +1,5 @@
+import type { WebSocket } from "uWebSockets.js";
+
 export type Player = {
   id: string;
   displayName: string;
@@ -17,7 +19,15 @@ export type Question = {
   answers: Answer[];
 };
 
-export const sampleQuestions: Question[] = [
+export type QuestionAnswered = Question & {
+  answerCorrectID: string;
+};
+
+export type PlayerConnected = Player & {
+  ws: WebSocket;
+}
+
+export const sampleQuestionsAnswered: QuestionAnswered[] = [
   {
     id: "1",
     title: "What is the capital of France?",
@@ -29,6 +39,7 @@ export const sampleQuestions: Question[] = [
       { id: "3", text: "Marseille" },
       { id: "4", text: "Toulouse" },
     ],
+    answerCorrectID: "1",
   },
   {
     id: "2",
@@ -41,6 +52,7 @@ export const sampleQuestions: Question[] = [
       { id: "3", text: "Cologne" },
       { id: "4", text: "Frankfurt" },
     ],
+    answerCorrectID: "1",
   },
   {
     id: "3",
@@ -53,5 +65,15 @@ export const sampleQuestions: Question[] = [
       { id: "3", text: "Naples" },
       { id: "4", text: "Turin" },
     ],
+    answerCorrectID: "1",
   },
 ];
+
+export function stripQuestionAnswered(question: QuestionAnswered): Question {
+  const { answerCorrectID, ...rest } = question;
+  return rest;
+}
+
+export const sampleQuestions: Question[] = sampleQuestionsAnswered.map(
+  stripQuestionAnswered,
+);

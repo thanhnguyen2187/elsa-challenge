@@ -1,17 +1,17 @@
 {
-  "name": "shared",
+  "name": "server",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "tsx watch index.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@types/node": "^22.9.0",
-    "svelte": "^5.0.0",
+    "shared": "workspace:*",
     "tsx": "^4.19.2",
     "typescript": "^5.0.0",
     "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.48.0",
