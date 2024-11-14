@@ -37,14 +37,14 @@ export namespace State {
 export namespace Context {
   export type Type = {
     ws: WebSocket;
-    quizzID: string;
+    quizID: string;
     playersMap: Map<string, Player>;
     questions: Question[];
     questionIndex: number;
     elapsedMs: number;
   };
 
-  export const initial: Omit<Type, "ws" | "quizzID"> = {
+  export const initial: Omit<Type, "ws" | "quizID"> = {
     playersMap: new Map(),
     questions: sampleQuestions,
     questionIndex: 0,
@@ -53,7 +53,7 @@ export namespace Context {
 
   export type Input = {
     ws: WebSocket;
-    quizzID: string;
+    quizID: string;
   };
 
   export function create({ input }: { input: Input }): Type {
@@ -144,12 +144,12 @@ export namespace Guard {
 
 export namespace Actor {
   export const tryServerChecking = fromCallback(
-    ({ input }: { input: { ws: WebSocket; quizzID: string } }) => {
+    ({ input }: { input: { ws: WebSocket; quizID: string } }) => {
       const interval = setInterval(() => {
         input.ws.send(
           JSON.stringify({
             type: "Organizer_ServerChecking",
-            quizzID: input.quizzID,
+            quizID: input.quizID,
           }),
         );
       }, 1000);
@@ -181,7 +181,7 @@ export const machine = setup({
       invoke: {
         input: ({ context }) => ({
           ws: context.ws,
-          quizzID: context.quizzID,
+          quizID: context.quizID,
         }),
         src: "tryServerChecking",
       },

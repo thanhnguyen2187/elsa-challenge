@@ -9,7 +9,7 @@ import {
 import type uWS from "uWebSockets.js";
 
 export namespace Constant {
-  export const MachineID = "Quizz";
+  export const MachineID = "quiz";
   export const TickMs = 500;
 }
 
@@ -35,7 +35,7 @@ export namespace State {
 
 export namespace Context {
   export type Type = {
-    quizzID: string;
+    quizID: string;
     wsOrganizer: uWS.WebSocket<unknown> | undefined;
     wsPlayersMap: Map<string, PlayerConnected>;
     questionsAnswered: QuestionAnswered[];
@@ -43,7 +43,7 @@ export namespace Context {
   };
 
   export type Input = {
-    quizzID: string;
+    quizID: string;
   };
 
   export function create({ input }: { input: Input }): Type {
@@ -112,7 +112,7 @@ export namespace Actor {
   export const readQuestionsAnswered = fromPromise(
     async ({
       input,
-    }: { input: { quizzID: string } }): Promise<QuestionAnswered[]> => {
+    }: { input: { quizID: string } }): Promise<QuestionAnswered[]> => {
       // stimulate fetching from database or another service
       return sampleQuestionsAnswered;
     },
@@ -145,7 +145,7 @@ export const machine = setup({
     [State.Initializing]: {
       invoke: {
         input: ({ context }) => ({
-          quizzID: context.quizzID,
+          quizID: context.quizID,
         }),
         src: "readQuestionsAnswered",
         onDone: {

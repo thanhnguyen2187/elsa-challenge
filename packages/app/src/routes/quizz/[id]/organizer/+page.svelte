@@ -4,10 +4,10 @@ import { createActor } from "xstate";
 import { wrap } from "shared/xstate-wrapper.svelte";
 import { page } from "$app/stores";
 
-const ws = new WebSocket("ws://localhost:8080/quizz/organizer");
-const quizzID = $page.params.id ?? "1";
+const ws = new WebSocket("ws://localhost:8080/quiz/organizer");
+const quizID = $page.params.id ?? "1";
 
-const actor = wrap(createActor(machine, { input: { ws, quizzID } }));
+const actor = wrap(createActor(machine, { input: { ws, quizID } }));
 const context = $derived(actor.state.context);
 
 const isServerChecking = $derived(actor.state.matches("ServerChecking"));
@@ -34,27 +34,27 @@ ws.onmessage = (e: MessageEvent) => {
 
 function handleStart() {
   if (!isWaiting) return;
-  ws.send(JSON.stringify({ quizzID, type: "Organizer_GameStart" }));
+  ws.send(JSON.stringify({ quizID, type: "Organizer_GameStart" }));
 }
 
 function handleCompleted() {
   if (!isPlaying) return;
-  ws.send(JSON.stringify({ quizzID, type: "Organizer_Completed" }));
+  ws.send(JSON.stringify({ quizID, type: "Organizer_Completed" }));
 }
 
 function handleFinish() {
   if (!isPlaying) return;
-  ws.send(JSON.stringify({ quizzID, type: "Organizer_Finished" }));
+  ws.send(JSON.stringify({ quizID, type: "Organizer_Finished" }));
 }
 
 function handleContinue() {
   if (!isLeaderboard) return;
-  ws.send(JSON.stringify({ quizzID, type: "Organizer_Continue" }));
+  ws.send(JSON.stringify({ quizID, type: "Organizer_Continue" }));
 }
 
 function handleRestart() {
   if (!isFinal) return;
-  ws.send(JSON.stringify({ quizzID, type: "Organizer_Restart" }));
+  ws.send(JSON.stringify({ quizID, type: "Organizer_Restart" }));
 }
 </script>
 

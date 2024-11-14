@@ -9,7 +9,7 @@ export namespace Constant {
 export namespace Context {
   export type Type = {
     ws: WebSocket;
-    quizzID: string;
+    quizID: string;
     playerCurrent: Player;
     playersMap: Map<string, Player>;
     questions: Question[];
@@ -18,7 +18,7 @@ export namespace Context {
     elapsedMs: number;
   };
 
-  export const initial: Omit<Type, "ws" | "quizzID"> = {
+  export const initial: Omit<Type, "ws" | "quizID"> = {
     playerCurrent: {
       id: crypto.randomUUID(),
       displayName: "...",
@@ -34,7 +34,7 @@ export namespace Context {
 
   export type Input = {
     ws: WebSocket;
-    quizzID: string;
+    quizID: string;
   };
 
   export function create({ input }: { input: Input }): Type {
@@ -121,12 +121,12 @@ export namespace Actor {
   export const tryServerChecking = fromCallback(
     ({
       input,
-    }: { input: { ws: WebSocket; quizzID: string; playerID: string } }) => {
+    }: { input: { ws: WebSocket; quizID: string; playerID: string } }) => {
       const interval = setInterval(() => {
         input.ws.send(
           JSON.stringify({
             type: "Player_ServerChecking",
-            quizzID: input.quizzID,
+            quizID: input.quizID,
             playerID: input.playerID,
           }),
         );
@@ -159,7 +159,7 @@ export const machine = setup({
       invoke: {
         input: ({ context }) => ({
           ws: context.ws,
-          quizzID: context.quizzID,
+          quizID: context.quizID,
           playerID: context.playerCurrent.id,
         }),
         src: "tryServerChecking",

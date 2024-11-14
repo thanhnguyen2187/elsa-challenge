@@ -4,10 +4,10 @@ import { machine } from "./state";
 import { wrap } from "shared/xstate-wrapper.svelte";
 import { page } from "$app/stores";
 
-const ws = new WebSocket("ws://localhost:8080/quizz");
-const quizzID = $page.params.id ?? "1";
+const ws = new WebSocket("ws://localhost:8080/quiz");
+const quizID = $page.params.id ?? "1";
 
-const actor = wrap(createActor(machine, { input: { ws, quizzID } }));
+const actor = wrap(createActor(machine, { input: { ws, quizID } }));
 const allowEnterName = $derived(actor.state.matches("Waiting"));
 const isServerChecking = $derived(actor.state.matches("ServerChecking"));
 const isWaiting = $derived(actor.state.matches("Waiting"));
@@ -42,7 +42,7 @@ function handleAnswerPicked(questionID: string, answerID: string) {
       questionID,
       playerID: playerCurrent.id,
       answerID,
-      quizzID,
+      quizID,
     }),
   );
   actor.ref.send({
