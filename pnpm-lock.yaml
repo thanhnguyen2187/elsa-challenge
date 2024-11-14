@@ -12,62 +12,7 @@ importers:
         specifier: ^1.9.4
         version: 1.9.4
 
-  packages/app-organizer:
-    dependencies:
-      shared:
-        specifier: workspace:*
-        version: link:../shared
-      xstate:
-        specifier: ^5.18.2
-        version: 5.18.2
-    devDependencies:
-      '@sveltejs/adapter-auto':
-        specifier: ^3.0.0
-        version: 3.3.1(@sveltejs/kit@2.8.0(@sveltejs/vite-plugin-svelte@4.0.0(svelte@5.1.13)(vite@5.4.10(@types/node@22.9.0)))(svelte@5.1.13)(vite@5.4.10(@types/node@22.9.0)))
-      '@sveltejs/kit':
-        specifier: ^2.0.0
-        version: 2.8.0(@sveltejs/vite-plugin-svelte@4.0.0(svelte@5.1.13)(vite@5.4.10(@types/node@22.9.0)))(svelte@5.1.13)(vite@5.4.10(@types/node@22.9.0))
-      '@sveltejs/vite-plugin-svelte':
-        specifier: ^4.0.0
-        version: 4.0.0(svelte@5.1.13)(vite@5.4.10(@types/node@22.9.0))
-      '@tailwindcss/aspect-ratio':
-        specifier: ^0.4.2
-        version: 0.4.2(tailwindcss@3.4.14)
-      '@tailwindcss/container-queries':
-        specifier: ^0.1.1
-        version: 0.1.1(tailwindcss@3.4.14)
-      '@tailwindcss/forms':
-        specifier: ^0.5.9
-        version: 0.5.9(tailwindcss@3.4.14)
-      '@tailwindcss/typography':
-        specifier: ^0.5.15
-        version: 0.5.15(tailwindcss@3.4.14)
-      autoprefixer:
-        specifier: ^10.4.20
-        version: 10.4.20(postcss@8.4.47)
-      daisyui:
-        specifier: ^4.12.14
-        version: 4.12.14(postcss@8.4.47)
-      svelte:
-        specifier: ^5.0.0
-        version: 5.1.13
-      svelte-check:
-        specifier: ^4.0.0
-        version: 4.0.6(svelte@5.1.13)(typescript@5.6.3)
-      tailwindcss:
-        specifier: ^3.4.9
-        version: 3.4.14
-      typescript:
-        specifier: ^5.0.0
-        version: 5.6.3
-      vite:
-        specifier: ^5.0.3
-        version: 5.4.10(@types/node@22.9.0)
-      vitest:
-        specifier: ^2.0.4
-        version: 2.1.4(@types/node@22.9.0)
-
-  packages/app-player:
+  packages/app:
     dependencies:
       shared:
         specifier: workspace:*
