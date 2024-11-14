@@ -68,8 +68,12 @@ export namespace Event {
     type: "Continue";
   };
 
-  export type Finish = {
-    type: "Finish";
+  export type Completed = {
+    type: "Completed";
+  };
+
+  export type Finished = {
+    type: "Finished";
   };
 
   export type Restart = {
@@ -81,7 +85,8 @@ export namespace Event {
     | PlayerJoined
     | GameStart
     | Continue
-    | Finish
+    | Completed
+    | Finished
     | Restart;
 }
 
@@ -181,7 +186,8 @@ export const machine = setup({
         [State.Stopped]: {},
       },
       on: {
-        Finish: State.generate([State.Leaderboard]),
+        Completed: State.Leaderboard,
+        Finished: State.Final,
       },
     },
     [State.Leaderboard]: {
@@ -205,6 +211,7 @@ export const machine = setup({
           }),
           target: State.Playing,
         },
+        Finished: State.Final,
       },
     },
     [State.Final]: {

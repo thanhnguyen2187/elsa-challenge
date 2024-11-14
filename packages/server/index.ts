@@ -4,20 +4,28 @@ import { machine as quizzMachine } from "./state";
 
 const actorsMap = new Map<string, ActorRefFrom<typeof quizzMachine>>();
 
+export function getOrCreateActor(quizzID: string, actorsMap: Map<string, ActorRefFrom<typeof quizzMachine>>) {
+  let actor = actorsMap.get(quizzID);
+  if (!actor) {
+    actor = createActor(quizzMachine, {
+      input: {
+        quizzID,
+      },
+    });
+    actor.start();
+    actorsMap.set(quizzID, actor);
+  }
+  return actor;
+}
+
 uWS
   .App()
   .ws("/quizz", {
-    open: (ws) => {
-      ws.send("Hello world!");
-    },
+    open: (ws) => {},
     message: (ws, message, isBinary) => {
       const messageTyped = JSON.parse(Buffer.from(message).toString());
       messageTyped.wsPlayer = ws;
-      const actor = actorsMap.get(messageTyped.quizzID);
-      if (!actor) {
-        console.error("No actor found for quizzID", messageTyped.quizzID);
-        return;
-      }
+      const actor = getOrCreateActor(messageTyped.quizzID, actorsMap);
       actor.send(messageTyped);
     },
     close: (ws, code) => {},
@@ -25,18 +33,12 @@ uWS
   .ws("/quizz/organizer", {
     open: (ws) => {},
     message: (ws, message, isBinary) => {
+      // TODO: validate message
       const messageTyped = JSON.parse(Buffer.from(message).toString());
-      let actor = actorsMap.get(messageTyped.quizzID);
-      if (!actor) {
-        actor = createActor(quizzMachine, {
-          input: {
-            quizzID: messageTyped.quizzID,
-            wsOrganizer: ws,
-          },
-        });
-        actor.start();
-        actorsMap.set(messageTyped.quizzID, actor);
-      }
+      const quizzID = messageTyped.quizzID;
+      messageTyped.wsOrganizer = ws;
+      const actor = getOrCreateActor(quizzID, actorsMap);
+      actor.send(messageTyped);
     },
     close: (ws, code) => {},
   })

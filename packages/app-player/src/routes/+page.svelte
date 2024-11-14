@@ -2,8 +2,12 @@
 import { createActor } from "xstate";
 import { machine } from "./state";
 import { wrap } from "shared/xstate-wrapper.svelte";
+import { page } from "$app/stores";
 
-const actor = wrap(createActor(machine));
+const ws = new WebSocket("ws://localhost:8080/quizz");
+const quizzID = $page.params.quizzID ?? "1";
+
+const actor = wrap(createActor(machine, { input: { ws, quizzID } }));
 const allowEnterName = $derived(actor.state.matches("Waiting"));
 const isServerChecking = $derived(actor.state.matches("ServerChecking"));
 const isWaiting = $derived(actor.state.matches("Waiting"));
@@ -23,6 +27,12 @@ const players = $derived(
     (a, b) => b.score - a.score,
   ),
 );
+
+ws.onmessage = (e: MessageEvent) => {
+  const messageTyped = JSON.parse(e.data);
+  console.log(messageTyped);
+  actor.ref.send(messageTyped);
+};
 
 // setTimeout(() => {
 //   actor.ref.send({ type: "ServerReady" });

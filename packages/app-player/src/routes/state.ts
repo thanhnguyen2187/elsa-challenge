@@ -8,6 +8,8 @@ export namespace Constant {
 
 export namespace Context {
   export type Type = {
+    ws: WebSocket;
+    quizzID: string;
     playerCurrent: Player;
     displayName: string;
     playerCount: number;
@@ -18,9 +20,9 @@ export namespace Context {
     elapsedMs: number;
   };
 
-  export const initial: Type = {
+  export const initial: Omit<Type, "ws" | "quizzID"> = {
     playerCurrent: {
-      id: "1",
+      id: crypto.randomUUID(),
       displayName: "...",
       score: 0,
     },
@@ -37,6 +39,18 @@ export namespace Context {
     questionsAnswered: new Map(),
     elapsedMs: 0,
   };
+
+  export type Input = {
+    ws: WebSocket;
+    quizzID: string;
+  };
+
+  export function create({ input }: { input: Input }): Type {
+    return {
+      ...initial,
+      ...input,
+    };
+  }
 }
 
 export namespace Event {
@@ -115,18 +129,35 @@ export const machine = setup({
   types: {
     context: {} as Context.Type,
     events: {} as Event.All,
+    input: {} as Context.Input,
   },
   actors: Actor.map,
 }).createMachine({
   id: "Global",
-  initial: "Waiting",
+  initial: "ServerChecking",
   // initial: "Playing",
   // initial: "Leaderboard",
-  context: Context.initial,
+  context: Context.create,
   states: {
     ServerChecking: {
       on: {
         ServerReady: "Waiting",
+      },
+      after: {
+        3000: {
+          actions: ({ context }) => {
+            console.log("Sending");
+            context.ws.send(
+              JSON.stringify({
+                type: "Player_ServerChecking",
+                quizzID: context.quizzID,
+                playerID: context.playerCurrent.id,
+              }),
+            );
+          },
+          target: "ServerChecking",
+          reenter: true,
+        },
       },
     },
     Waiting: {
