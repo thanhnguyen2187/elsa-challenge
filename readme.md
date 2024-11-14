@@ -15,7 +15,7 @@ Make sure that you have NodeJS and pnpm installed.
 npx pnpm install
 ```
 
-To run the development server:
+To run the development frontend and real-time server:
 
 ```sh
 npx pnpm dev
