@@ -356,20 +356,20 @@ export const machine = setup({
         },
       },
       after: {
-        // currentQuestion: {
-        //   actions: [
-        //     assign({
-        //       questionIndex: ({ context }) => context.questionIndex + 1,
-        //     }),
-        //     ({ context }) => {
-        //       context.wsOrganizer?.send(JSON.stringify({ type: "Completed" }));
-        //       for (const [, player] of context.wsPlayersMap) {
-        //         player.ws.send(JSON.stringify({ type: "Completed" }));
-        //       }
-        //     },
-        //   ],
-        //   target: State.Leaderboard,
-        // },
+        currentQuestion: {
+          actions: [
+            assign({
+              questionIndex: ({ context }) => context.questionIndex + 1,
+            }),
+            ({ context }) => {
+              context.wsOrganizer?.send(JSON.stringify({ type: "Completed" }));
+              for (const [, player] of context.wsPlayersMap) {
+                player.ws.send(JSON.stringify({ type: "Completed" }));
+              }
+            },
+          ],
+          target: State.Leaderboard,
+        },
       },
     },
     [State.Leaderboard]: {
