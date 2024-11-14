@@ -5,7 +5,7 @@ import { wrap } from "shared/xstate-wrapper.svelte";
 import { page } from "$app/stores";
 
 const ws = new WebSocket("ws://localhost:8080/quizz");
-const quizzID = $page.params.quizzID ?? "1";
+const quizzID = $page.params.id ?? "1";
 
 const actor = wrap(createActor(machine, { input: { ws, quizzID } }));
 const allowEnterName = $derived(actor.state.matches("Waiting"));
