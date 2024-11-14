@@ -109,7 +109,7 @@ Some notes about this scenario:
 This scenario is not that different from the previous one in the sense that 
 action 3, 4, and 5 can be done in parallel.
 
-### When a player answers a question
+### When a player answers a question/leaderboard updates
 
 ![Player answer](./images/sequence_diagram__player_answer.png)
 
@@ -132,19 +132,32 @@ And the "main" technologies are:
 - TypeScript
 - Svelte/SvelteKit
 - XState
+- WebSockets
 
 The main reason I picked these technologies is that I'm most familiar/productive
 with them. However, I'll try to explain their pros and cons as well. The 
 non-comprehensive list is:
 
 - TypeScript: the language does the job, and not to mention having one 
-  language for both frontend and backend is a good idea for code reuse and 
-  reducing mental overhead.
+  language for both frontend and backend is a good idea for code reusing and 
+  mental overhead reducing. Performance might be a concern later, but I think 
+  we can do a lot more before we have to worry about it.
 - Svelte and SvelteKit: the DX is great, and the learning curve is low. However,
-  the ecosystem is still young, not to mention a new recent major version
-  release (Svelte 5 vs Svelte 4). However, I'll keep using it anywhere I can.
-- XState: it is a complex state management library with high learning curve, but
-  it's a good fit for this kind of application, where you are implementing a
-  highly-dynamic SPA. For me, another benefit is that after being familiar with
-  it, I can delegate side effects handling to it. Frontend frameworks without
-  side effects handling become "view-only" and thus expendable.
+  the ecosystem is still young, not to mention instability (a new recent major
+  version release from Svelte 4 to Svelte 5). I would say that it's a good 
+  fit for side projects, but for a team setting, just stick with 
+  React/Vue/whatever the team is using.
+- XState: the state management library is a good fit for highly-dynamic SPAs
+  like this assignment. Another good thing is that it makes frontend frameworks 
+  expendable: you still have to learn the "reactivity" syntaxes, but XState 
+  will handle side effects well and make porting the application a breeze. A 
+  big downside of XState is the high learning curve. It's like a more
+  constrained programming language (in a both good and bad way). Its typing can
+  be clunky as well. Despite that, I would want to recommend my teammates to 
+  learn XState and use it as the mindset is not only applicable to frontend 
+  development.
+- WebSockets: the communication protocol is simple and easy to use. Compared to
+  Socket.IO, it might be more bare-bones, but we exchange that for
+  interoperability: later on, we can swap the current server implementation with
+  another compiled language implementation (Go or Rust or C++, etc.) for further
+  optimizations.
