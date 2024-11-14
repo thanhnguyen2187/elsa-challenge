@@ -1,4 +1,4 @@
-import { assign, fromPromise, setup } from "xstate";
+import { assign, fromCallback, fromPromise, setup } from "xstate";
 import type { Answer, Player, Question } from "shared/domain";
 import { sampleQuestions } from "shared/domain";
 
@@ -11,7 +11,6 @@ export namespace Context {
     ws: WebSocket;
     quizzID: string;
     playerCurrent: Player;
-    displayName: string;
     playerCount: number;
     playersMap: Map<string, Player>;
     questions: Question[];
@@ -26,7 +25,6 @@ export namespace Context {
       displayName: "...",
       score: 0,
     },
-    displayName: "...",
     playerCount: 1,
     playersMap: new Map([
       ["1", { id: "1", displayName: "Player 1", score: 0 }],
@@ -34,7 +32,8 @@ export namespace Context {
       ["3", { id: "3", displayName: "Player 3", score: 0 }],
       ["4", { id: "4", displayName: "Player 4", score: 0 }],
     ]),
-    questions: sampleQuestions,
+    // questions: sampleQuestions,
+    questions: [],
     questionIndex: 0,
     questionsAnswered: new Map(),
     elapsedMs: 0,
@@ -63,9 +62,19 @@ export namespace Event {
     value: string;
   };
 
-  export type SetPlayerCount = {
-    type: "SetPlayerCount";
-    value: number;
+  export type SetQuestions = {
+    type: "SetQuestions";
+    value: Question[];
+  };
+
+  export type SetPlayers = {
+    type: "SetPlayers";
+    value: Player[];
+  };
+
+  export type PlayerJoined = {
+    type: "PlayerJoined";
+    player: Player;
   };
 
   export type GameStart = {
@@ -103,7 +112,9 @@ export namespace Event {
   export type All =
     | ServerReady
     | SetDisplayName
-    | SetPlayerCount
+    | PlayerJoined
+    | SetQuestions
+    | SetPlayers
     | GameStart
     | AnswerPicked
     | Next
@@ -114,14 +125,26 @@ export namespace Event {
 }
 
 export namespace Actor {
-  export const AsyncIncrement = fromPromise(
-    async ({ input }: { input: number }) => {
-      return input + 1;
+  export const tryServerChecking = fromCallback(
+    ({
+      input,
+    }: { input: { ws: WebSocket; quizzID: string; playerID: string } }) => {
+      const interval = setInterval(() => {
+        input.ws.send(
+          JSON.stringify({
+            type: "Player_ServerChecking",
+            quizzID: input.quizzID,
+            playerID: input.playerID,
+          }),
+        );
+      }, 3000);
+
+      return () => clearInterval(interval);
     },
   );
 
   export const map = {
-    asyncIncrement: AsyncIncrement,
+    tryServerChecking,
   };
 }
 
@@ -140,39 +163,45 @@ export const machine = setup({
   context: Context.create,
   states: {
     ServerChecking: {
+      invoke: {
+        input: ({ context }) => ({
+          ws: context.ws,
+          quizzID: context.quizzID,
+          playerID: context.playerCurrent.id,
+        }),
+        src: "tryServerChecking",
+      },
       on: {
         ServerReady: "Waiting",
-      },
-      after: {
-        3000: {
-          actions: ({ context }) => {
-            console.log("Sending");
-            context.ws.send(
-              JSON.stringify({
-                type: "Player_ServerChecking",
-                quizzID: context.quizzID,
-                playerID: context.playerCurrent.id,
-              }),
-            );
-          },
-          target: "ServerChecking",
-          reenter: true,
-        },
       },
     },
     Waiting: {
       on: {
-        SetDisplayName: {
+        PlayerJoined: {
+          actions: assign(({ context, event }) => {
+            const newPlayer = event.player;
+            const result: Partial<Context.Type> = {};
+            if (newPlayer.id === context.playerCurrent.id) {
+              result.playerCurrent = newPlayer;
+            }
+            result.playersMap = new Map(context.playersMap);
+            result.playersMap.set(newPlayer.id, newPlayer);
+            return result;
+          })
+        },
+        SetQuestions: {
           actions: assign({
-            playerCurrent: ({ context, event }) => ({
-              ...context.playerCurrent,
-              displayName: event.value,
-            }),
+            questions: ({ event }) => event.value,
           }),
         },
-        SetPlayerCount: {
+        SetPlayers: {
           actions: assign({
-            playerCount: ({ event }) => event.value,
+            playersMap: ({ event }) => {
+              const playersMap = new Map(
+                event.value.map((player) => [player.id, player]),
+              );
+              return playersMap;
+            },
           }),
         },
         GameStart: "Playing",

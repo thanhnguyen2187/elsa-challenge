@@ -16,7 +16,7 @@ const isLeaderboard = $derived(actor.state.matches("Leaderboard"));
 const isFinal = $derived(actor.state.matches("Final"));
 
 const playerCurrent = $derived(actor.state.context.playerCurrent);
-const playerCount = $derived(actor.state.context.playerCount);
+const playerCount = $derived(Array.from(actor.state.context.playersMap).length);
 const questions = $derived(actor.state.context.questions);
 const questionIndex = $derived(actor.state.context.questionIndex);
 const questionCurrent = $derived(questions[questionIndex]);
@@ -33,53 +33,6 @@ ws.onmessage = (e: MessageEvent) => {
   console.log(messageTyped);
   actor.ref.send(messageTyped);
 };
-
-// setTimeout(() => {
-//   actor.ref.send({ type: "ServerReady" });
-//   actor.ref.send({ type: "SetDisplayName", value: "Player 1" });
-// }, 1_000);
-// setTimeout(() => {
-//   actor.ref.send({ type: "SetPlayerCount", value: 2 });
-// }, 1_500);
-// setTimeout(() => {
-//   actor.ref.send({ type: "SetPlayerCount", value: 4 });
-// }, 3_500);
-// setTimeout(() => {
-//   actor.ref.send({ type: "GameStart" });
-// }, 5_000);
-
-// setTimeout(() => {
-//   actor.ref.send({ type: "SetPlayerScore", id: "1", value: 10 });
-//   actor.ref.send({ type: "SetPlayerScore", id: "2", value: 15 });
-//   actor.ref.send({ type: "SetPlayerScore", id: "3", value: 10 });
-// }, 6_000);
-// setTimeout(() => {
-//   actor.ref.send({ type: "Completed" });
-// }, 7_000);
-
-// setTimeout(() => {
-//   actor.ref.send({ type: "Continue" });
-// }, 8_000);
-// setTimeout(() => {
-//   actor.ref.send({ type: "SetPlayerScore", id: "1", value: 19 });
-//   actor.ref.send({ type: "SetPlayerScore", id: "2", value: 24 });
-//   actor.ref.send({ type: "SetPlayerScore", id: "3", value: 20 });
-// }, 9_000);
-// setTimeout(() => {
-//   actor.ref.send({ type: "Completed" });
-// }, 10_000);
-
-// setTimeout(() => {
-//   actor.ref.send({ type: "Continue" });
-// }, 11_000);
-// setTimeout(() => {
-//   actor.ref.send({ type: "SetPlayerScore", id: "1", value: 29 });
-//   actor.ref.send({ type: "SetPlayerScore", id: "2", value: 24 });
-//   actor.ref.send({ type: "SetPlayerScore", id: "3", value: 20 });
-// }, 12_000);
-// setTimeout(() => {
-//   actor.ref.send({ type: "Finish" });
-// }, 14_000);
 
 function handleChangeDisplayName(event: Event) {
   if (!isWaiting) return;

@@ -24,7 +24,7 @@ export type QuestionAnswered = Question & {
 };
 
 export type PlayerConnected = Player & {
-  ws: WebSocket;
+  ws: WebSocket<unknown>;
 }
 
 export const sampleQuestionsAnswered: QuestionAnswered[] = [
@@ -71,6 +71,11 @@ export const sampleQuestionsAnswered: QuestionAnswered[] = [
 
 export function stripQuestionAnswered(question: QuestionAnswered): Question {
   const { answerCorrectID, ...rest } = question;
+  return rest;
+}
+
+export function stripPlayerConnected(player: PlayerConnected): Player {
+  const { ws, ...rest } = player;
   return rest;
 }
 

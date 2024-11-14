@@ -4,6 +4,7 @@ import {
   type PlayerConnected,
   sampleQuestionsAnswered,
   stripQuestionAnswered,
+  stripPlayerConnected,
 } from "shared/domain";
 import type uWS from "uWebSockets.js";
 
@@ -143,7 +144,7 @@ export const machine = setup({
             }),
           ],
         },
-        onError: [State.Error_],
+        onError: State.Error_,
       },
     },
     [State.Waiting]: {
@@ -157,9 +158,12 @@ export const machine = setup({
               event.wsOrganizer.send(
                 JSON.stringify({
                   type: "ServerReady",
-                  questions: context.questionsAnswered.map(
-                    stripQuestionAnswered,
-                  ),
+                }),
+              );
+              event.wsOrganizer.send(
+                JSON.stringify({
+                  type: "SetQuestions",
+                  value: context.questionsAnswered.map(stripQuestionAnswered),
                 }),
               );
             },
@@ -171,31 +175,54 @@ export const machine = setup({
             assign({
               wsPlayersMap: ({ context, event }) => {
                 const wsPlayersMap = context.wsPlayersMap;
-                const displayName = `Player ${wsPlayersMap.size + 1}`;
-                const player = {
+                const displayName = `Player ${context.wsPlayersMap.size + 1}`;
+                const newPlayer = {
                   id: event.playerID,
                   displayName,
                   score: 0,
                 };
                 wsPlayersMap.set(event.playerID, {
                   ws: event.wsPlayer,
-                  ...player,
+                  ...newPlayer,
                 });
                 return wsPlayersMap;
               },
             }),
             ({ context, event }) => {
               const displayName = `Player ${context.wsPlayersMap.size}`;
+              const newPlayer = {
+                id: event.playerID,
+                displayName,
+                score: 0,
+              };
+
+              // Notify the new player
               event.wsPlayer.send(JSON.stringify({ type: "ServerReady" }));
-              event.wsPlayer.send(
-                JSON.stringify({ type: "SetDisplayName", value: displayName }),
-              );
               event.wsPlayer.send(
                 JSON.stringify({
                   type: "SetQuestions",
                   value: context.questionsAnswered.map(stripQuestionAnswered),
                 }),
               );
+              event.wsPlayer.send(
+                JSON.stringify({
+                  type: "SetPlayers",
+                  value: Array.from(context.wsPlayersMap.values()).map(
+                    stripPlayerConnected,
+                  ),
+                }),
+              );
+
+              // Notify all players that a new player joined. In case the new
+              // player is notified, his name will be set.
+              for (const [, player] of context.wsPlayersMap) {
+                player.ws.send(
+                  JSON.stringify({
+                    type: "PlayerJoined",
+                    player: newPlayer,
+                  }),
+                );
+              }
             },
           ],
         },
@@ -244,7 +271,7 @@ export const machine = setup({
     [State.Leaderboard]: {
       on: {
         Organizer_Continue: State.Playing,
-      }
+      },
     },
     [State.Final]: {},
     [State.Error_]: {},
