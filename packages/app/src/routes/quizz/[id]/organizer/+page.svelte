@@ -20,7 +20,11 @@ const elapsedMs = $derived(actor.state.context.elapsedMs);
 const allowContinue = $derived(Guard.allowContinue({ context }));
 const allowStartGame = $derived(Guard.allowStartGame({ context }));
 
-const players = $derived(Array.from(actor.state.context.playersMap.values()));
+const players = $derived(
+  Array.from(actor.state.context.playersMap.values()).sort(
+    (a, b) => b.score - a.score,
+  ),
+);
 const questions = $derived(actor.state.context.questions);
 const questionIndex = $derived(actor.state.context.questionIndex);
 const isLastQuestion = $derived(questionIndex === questions.length - 1);
