@@ -25,8 +25,11 @@ uWS
     message: (ws, message, isBinary) => {
       const messageTyped = JSON.parse(Buffer.from(message).toString());
       messageTyped.wsPlayer = ws;
+      console.log("Received", messageTyped)
       const actor = getOrCreateActor(messageTyped.quizzID, actorsMap);
+      console.log("State before", actor.getSnapshot().value);
       actor.send(messageTyped);
+      console.log("State after", actor.getSnapshot().value);
     },
     close: (ws, code) => {},
   })
@@ -35,10 +38,13 @@ uWS
     message: (ws, message, isBinary) => {
       // TODO: validate message
       const messageTyped = JSON.parse(Buffer.from(message).toString());
+      console.log("Received", messageTyped)
       const quizzID = messageTyped.quizzID;
       messageTyped.wsOrganizer = ws;
       const actor = getOrCreateActor(quizzID, actorsMap);
+      console.log("State before", actor.getSnapshot().value);
       actor.send(messageTyped);
+      console.log("State after", actor.getSnapshot().value);
     },
     close: (ws, code) => {},
   })

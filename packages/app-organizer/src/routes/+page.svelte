@@ -2,8 +2,12 @@
 import { machine, Guard } from "./state";
 import { createActor } from "xstate";
 import { wrap } from "shared/xstate-wrapper.svelte";
+import { page } from "$app/stores";
 
-const actor = wrap(createActor(machine));
+const ws = new WebSocket("ws://localhost:8080/quizz/organizer");
+const quizzID = $page.params.quizzID ?? "1";
+
+const actor = wrap(createActor(machine, { input: { ws, quizzID } }));
 const context = $derived(actor.state.context);
 
 const isServerChecking = $derived(actor.state.matches("ServerChecking"));
@@ -19,54 +23,38 @@ const allowStartGame = $derived(Guard.allowStartGame({ context }));
 const players = $derived(Array.from(actor.state.context.playersMap.values()));
 const questions = $derived(actor.state.context.questions);
 const questionIndex = $derived(actor.state.context.questionIndex);
+const isLastQuestion = $derived(questionIndex === questions.length - 1);
 const questionCurrent = $derived(questions[questionIndex]);
 
-setTimeout(() => {
-  actor.ref.send({ type: "ServerReady" });
-}, 2_000);
-setTimeout(() => {
-  actor.ref.send({
-    type: "PlayerJoined",
-    player: { id: "1", displayName: "Player 1", score: 0 },
-  });
-}, 3_000);
-setTimeout(() => {
-  actor.ref.send({
-    type: "PlayerJoined",
-    player: { id: "2", displayName: "Player 2", score: 0 },
-  });
-}, 3_500);
-setTimeout(() => {
-  actor.ref.send({
-    type: "PlayerJoined",
-    player: { id: "3", displayName: "Player 3", score: 0 },
-  });
-}, 4_000);
-setTimeout(() => {
-  actor.ref.send({
-    type: "PlayerJoined",
-    player: { id: "4", displayName: "Player 4", score: 0 },
-  });
-}, 4_000);
+ws.onmessage = (e: MessageEvent) => {
+  const messageTyped = JSON.parse(e.data);
+  console.log(messageTyped);
+  actor.ref.send(messageTyped);
+};
 
 function handleStart() {
   if (!isWaiting) return;
-  actor.ref.send({ type: "GameStart" });
+  ws.send(JSON.stringify({ quizzID, type: "Organizer_GameStart" }));
+}
+
+function handleCompleted() {
+  if (!isPlaying) return;
+  ws.send(JSON.stringify({ quizzID, type: "Organizer_Completed" }));
 }
 
 function handleFinish() {
   if (!isPlaying) return;
-  actor.ref.send({ type: "Finish" });
+  ws.send(JSON.stringify({ quizzID, type: "Organizer_Finished" }));
 }
 
 function handleContinue() {
   if (!isLeaderboard) return;
-  actor.ref.send({ type: "Continue" });
+  ws.send(JSON.stringify({ quizzID, type: "Organizer_Continue" }));
 }
 
 function handleRestart() {
   if (!isFinal) return;
-  actor.ref.send({ type: "Restart" });
+  ws.send(JSON.stringify({ quizzID, type: "Organizer_Restart" }));
 }
 </script>
 
@@ -132,12 +120,21 @@ function handleRestart() {
           <p>{questionCurrent.description ? questionCurrent.description : "[No description yet]"}</p>
         </div>
         <div class="h-[7em]">
-          <button
-            class="btn btn-primary"
-            onclick={handleFinish}
-          >
-            Finish
-          </button>
+          {#if isLastQuestion}
+            <button
+              class="btn btn-primary"
+              onclick={handleFinish}
+            >
+              Finish
+            </button>
+          {:else}
+            <button
+              class="btn btn-primary"
+              onclick={handleCompleted}
+            >
+              Completed
+            </button>
+          {/if}
         </div>
       {:else if isLeaderboard || isFinal}
         <div class="h-[20em]">
@@ -172,7 +169,7 @@ function handleRestart() {
             </button>
           {:else}
             <button
-              class="btn btn-primary mt-2"
+              class="btn btn-primary mt-2 disabled"
               onclick={handleRestart}
             >
               Restart
@@ -180,7 +177,6 @@ function handleRestart() {
           {/if}
         </div>
       {/if}
-
     </div>
   </div>
 </div>

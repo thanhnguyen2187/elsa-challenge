@@ -11,7 +11,6 @@ export namespace Context {
     ws: WebSocket;
     quizzID: string;
     playerCurrent: Player;
-    playerCount: number;
     playersMap: Map<string, Player>;
     questions: Question[];
     questionIndex: number;
@@ -25,13 +24,7 @@ export namespace Context {
       displayName: "...",
       score: 0,
     },
-    playerCount: 1,
-    playersMap: new Map([
-      ["1", { id: "1", displayName: "Player 1", score: 0 }],
-      ["2", { id: "2", displayName: "Player 2", score: 0 }],
-      ["3", { id: "3", displayName: "Player 3", score: 0 }],
-      ["4", { id: "4", displayName: "Player 4", score: 0 }],
-    ]),
+    playersMap: new Map(),
     // questions: sampleQuestions,
     questions: [],
     questionIndex: 0,
@@ -57,11 +50,6 @@ export namespace Event {
     type: "ServerReady";
   };
 
-  export type SetDisplayName = {
-    type: "SetDisplayName";
-    value: string;
-  };
-
   export type SetQuestions = {
     type: "SetQuestions";
     value: Question[];
@@ -83,8 +71,9 @@ export namespace Event {
 
   export type AnswerPicked = {
     type: "AnswerPicked";
-    questionId: string;
-    answerId: string;
+    playerID: string;
+    questionID: string;
+    answerID: string;
   };
 
   export type Next = {
@@ -105,13 +94,16 @@ export namespace Event {
     value: number;
   };
 
-  export type Finish = {
-    type: "Finish";
+  export type Finished = {
+    type: "Finished";
+  };
+
+  export type Restart = {
+    type: "Restart";
   };
 
   export type All =
     | ServerReady
-    | SetDisplayName
     | PlayerJoined
     | SetQuestions
     | SetPlayers
@@ -121,7 +113,8 @@ export namespace Event {
     | Completed
     | Continue
     | SetPlayerScore
-    | Finish;
+    | Finished
+    | Restart;
 }
 
 export namespace Actor {
@@ -137,7 +130,7 @@ export namespace Actor {
             playerID: input.playerID,
           }),
         );
-      }, 3000);
+      }, 1000);
 
       return () => clearInterval(interval);
     },
@@ -213,7 +206,7 @@ export const machine = setup({
         Completed: {
           target: "Leaderboard",
         },
-        Finish: "Final",
+        Finished: "Final",
         SetPlayerScore: {
           actions: assign({
             playersMap: ({ context, event }) => {
@@ -233,7 +226,7 @@ export const machine = setup({
           actions: assign({
             questionsAnswered: ({ context, event }) => {
               const questionsAnswered = new Map(context.questionsAnswered);
-              questionsAnswered.set(event.questionId, event.answerId);
+              questionsAnswered.set(event.questionID, event.answerID);
               return questionsAnswered;
             },
           }),
@@ -269,10 +262,21 @@ export const machine = setup({
           }),
           target: "Playing",
         },
-        Finish: "Final",
+        Finished: "Final",
       },
     },
-    Final: {},
+    Final: {
+      on: {
+        Restart: {
+          target: "ServerChecking" ,
+          actions: assign({
+            questionIndex: () => 0,
+            playersMap: () => new Map(),
+            elapsedMs: () => 0,
+          }),
+        },
+      }
+    },
   },
   on: {},
 });

@@ -34,16 +34,23 @@ ws.onmessage = (e: MessageEvent) => {
   actor.ref.send(messageTyped);
 };
 
-function handleChangeDisplayName(event: Event) {
-  if (!isWaiting) return;
-  const target = event.target as HTMLInputElement;
-  const value = target.value;
-  actor.ref.send({ type: "SetDisplayName", value });
-}
-
-function handleAnswerPicked(questionId: string, answerId: string) {
+function handleAnswerPicked(questionID: string, answerID: string) {
   if (!isPlaying) return;
-  actor.ref.send({ type: "AnswerPicked", questionId, answerId });
+  ws.send(
+    JSON.stringify({
+      type: "Player_AnswerPicked",
+      questionID,
+      playerID: playerCurrent.id,
+      answerID,
+      quizzID,
+    }),
+  );
+  actor.ref.send({
+    type: "AnswerPicked",
+    questionID,
+    answerID,
+    playerID: playerCurrent.id,
+  });
 }
 </script>
 
@@ -98,7 +105,6 @@ function handleAnswerPicked(questionId: string, answerId: string) {
               type="text"
               placeholder="Enter another name"
               disabled={!allowEnterName}
-              onchange={handleChangeDisplayName}
             />
             <div
               class="stat-title"

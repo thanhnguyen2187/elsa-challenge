@@ -25,6 +25,7 @@ export type QuestionAnswered = Question & {
 
 export type PlayerConnected = Player & {
   ws: WebSocket<unknown>;
+  answersPicked: Map<string, string>;
 }
 
 export const sampleQuestionsAnswered: QuestionAnswered[] = [

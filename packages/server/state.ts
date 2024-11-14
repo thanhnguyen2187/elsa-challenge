@@ -40,7 +40,6 @@ export namespace Context {
     wsPlayersMap: Map<string, PlayerConnected>;
     questionsAnswered: QuestionAnswered[];
     questionIndex: number;
-    elapsedMs: number;
   };
 
   export type Input = {
@@ -54,7 +53,6 @@ export namespace Context {
       wsPlayersMap: new Map(),
       questionsAnswered: [],
       questionIndex: 0,
-      elapsedMs: 0,
     };
   }
 }
@@ -71,8 +69,16 @@ export namespace Event {
     wsPlayer: uWS.WebSocket<unknown>;
   };
 
-  export type Organizer_Start = {
-    type: "Organizer_Start";
+  export type Organizer_GameStart = {
+    type: "Organizer_GameStart";
+  };
+
+  export type Player_AnswerPicked = {
+    type: "Player_AnswerPicked";
+    wsPlayer: uWS.WebSocket<unknown>;
+    questionID: string;
+    answerID: string;
+    playerID: string;
   };
 
   export type Organizer_Completed = {
@@ -87,12 +93,18 @@ export namespace Event {
     type: "Organizer_Finished";
   };
 
+  export type Organizer_Restart = {
+    type: "Organizer_Restart";
+  };
+
   export type All =
     | Organizer_ServerChecking
-    | Organizer_Start
+    | Organizer_GameStart
+    | Player_AnswerPicked
     | Organizer_Completed
     | Organizer_Continue
     | Organizer_Finished
+    | Organizer_Restart
     | Player_ServerChecking;
 }
 
@@ -166,6 +178,14 @@ export const machine = setup({
                   value: context.questionsAnswered.map(stripQuestionAnswered),
                 }),
               );
+              event.wsOrganizer.send(
+                JSON.stringify({
+                  type: "SetPlayers",
+                  value: Array.from(context.wsPlayersMap.values()).map(
+                    stripPlayerConnected,
+                  ),
+                }),
+              );
             },
           ],
         },
@@ -183,6 +203,7 @@ export const machine = setup({
                 };
                 wsPlayersMap.set(event.playerID, {
                   ws: event.wsPlayer,
+                  answersPicked: new Map(),
                   ...newPlayer,
                 });
                 return wsPlayersMap;
@@ -213,23 +234,26 @@ export const machine = setup({
                 }),
               );
 
-              // Notify all players that a new player joined. In case the new
+              // Notify everyone that a new player joined. In case the new
               // player is notified, his name will be set.
-              for (const [, player] of context.wsPlayersMap) {
-                player.ws.send(
-                  JSON.stringify({
-                    type: "PlayerJoined",
-                    player: newPlayer,
-                  }),
-                );
+              {
+                const event = {
+                  type: "PlayerJoined",
+                  player: newPlayer,
+                };
+                const eventStr = JSON.stringify(event);
+                for (const [, player] of context.wsPlayersMap) {
+                  player.ws.send(eventStr);
+                }
+                context.wsOrganizer?.send(eventStr);
               }
             },
           ],
         },
-        Organizer_Start: {
+        Organizer_GameStart: {
           target: State.Playing,
           actions: [
-            ({ context, event }) => {
+            ({ context }) => {
               context.wsOrganizer?.send(JSON.stringify({ type: "GameStart" }));
               for (const [, player] of context.wsPlayersMap) {
                 player.ws.send(JSON.stringify({ type: "GameStart" }));
@@ -248,11 +272,8 @@ export const machine = setup({
         },
       ],
       on: {
-        Organizer_Completed: State.Leaderboard,
-        Organizer_Finished: State.Final,
-      },
-      after: {
-        currentQuestion: {
+        Organizer_Completed: {
+          target: State.Leaderboard,
           actions: [
             assign({
               questionIndex: ({ context }) => context.questionIndex + 1,
@@ -264,16 +285,128 @@ export const machine = setup({
               }
             },
           ],
-          target: State.Leaderboard,
         },
+        Organizer_Finished: {
+          target: State.Final,
+          actions: [
+            ({ context }) => {
+              context.wsOrganizer?.send(JSON.stringify({ type: "Finished" }));
+              for (const [, player] of context.wsPlayersMap) {
+                player.ws.send(JSON.stringify({ type: "Finished" }));
+              }
+            },
+          ],
+        },
+        Player_AnswerPicked: {
+          actions: [
+            assign({
+              wsPlayersMap: ({ context, event }) => {
+                // If there is no player, we don't need to do anything
+                const player = context.wsPlayersMap.get(event.playerID);
+                if (!player) {
+                  return context.wsPlayersMap;
+                }
+
+                // If the player is not the one who picked the answer, we don't
+                // need to do anything
+                if (player.ws !== event.wsPlayer) {
+                  return context.wsPlayersMap;
+                }
+
+                // If the player already picked an answer, we also don't need to
+                // do anything
+                const answersPicked = player.answersPicked;
+                if (answersPicked.has(event.questionID)) {
+                  return context.wsPlayersMap;
+                }
+
+                // If the answer came at the wrong time, we also do nothing.
+                const currentQuestion =
+                  context.questionsAnswered[context.questionIndex];
+                if (currentQuestion.id !== event.questionID) {
+                  return context.wsPlayersMap;
+                }
+
+                // Otherwise, we update the player's answer and increase the
+                // score if it was correct; we also need to notify the player
+                // who answered, but optimistically update in this case doesn't
+                // matter
+                answersPicked.set(event.questionID, event.answerID);
+                if (event.answerID === currentQuestion.answerCorrectID) {
+                  // TODO: implement a better way to score the player
+                  player.score += 100;
+                  // Also notify everyone of the new score
+                  const event = {
+                    type: "SetPlayerScore",
+                    id: player.id,
+                    value: player.score,
+                  };
+                  const eventStr = JSON.stringify(event);
+                  for (const [, player] of context.wsPlayersMap) {
+                    player.ws.send(eventStr);
+                  }
+                  context.wsOrganizer?.send(eventStr);
+                }
+
+                const wsPlayersMap = new Map(context.wsPlayersMap);
+                return wsPlayersMap;
+              },
+            }),
+          ],
+        },
+      },
+      after: {
+        // currentQuestion: {
+        //   actions: [
+        //     assign({
+        //       questionIndex: ({ context }) => context.questionIndex + 1,
+        //     }),
+        //     ({ context }) => {
+        //       context.wsOrganizer?.send(JSON.stringify({ type: "Completed" }));
+        //       for (const [, player] of context.wsPlayersMap) {
+        //         player.ws.send(JSON.stringify({ type: "Completed" }));
+        //       }
+        //     },
+        //   ],
+        //   target: State.Leaderboard,
+        // },
       },
     },
     [State.Leaderboard]: {
       on: {
-        Organizer_Continue: State.Playing,
+        Organizer_Continue: {
+          target: State.Playing,
+          actions: [
+            ({ context }) => {
+              context.wsOrganizer?.send(JSON.stringify({ type: "Continue" }));
+              for (const [, player] of context.wsPlayersMap) {
+                player.ws.send(JSON.stringify({ type: "Continue" }));
+              }
+            },
+          ],
+        },
       },
     },
-    [State.Final]: {},
+    [State.Final]: {
+      on: {
+        Organizer_Restart: {
+          target: State.Initializing,
+          actions: [
+            ({ context }) => {
+              context.wsOrganizer?.send(JSON.stringify({ type: "Restart" }));
+              for (const [, player] of context.wsPlayersMap) {
+                player.ws.send(JSON.stringify({ type: "Restart" }));
+              }
+            },
+            assign({
+              wsPlayersMap: new Map(),
+              questionIndex: 0,
+              questionsAnswered: [],
+            }),
+          ],
+        },
+      },
+    },
     [State.Error_]: {},
   },
   on: {},

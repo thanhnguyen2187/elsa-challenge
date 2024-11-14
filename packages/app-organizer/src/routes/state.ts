@@ -1,4 +1,4 @@
-import { assign, fromPromise, setup } from "xstate";
+import { assign, fromCallback, fromPromise, setup } from "xstate";
 import type { Player, Answer, Question } from "shared/domain";
 import { sampleQuestions } from "shared/domain";
 
@@ -36,23 +36,47 @@ export namespace State {
 
 export namespace Context {
   export type Type = {
+    ws: WebSocket;
+    quizzID: string;
     playersMap: Map<string, Player>;
     questions: Question[];
     questionIndex: number;
     elapsedMs: number;
   };
 
-  export const initial: Type = {
+  export const initial: Omit<Type, "ws" | "quizzID"> = {
     playersMap: new Map(),
     questions: sampleQuestions,
     questionIndex: 0,
     elapsedMs: 0,
   };
+
+  export type Input = {
+    ws: WebSocket;
+    quizzID: string;
+  };
+
+  export function create({ input }: { input: Input }): Type {
+    return {
+      ...initial,
+      ...input,
+    };
+  }
 }
 
 export namespace Event {
   export type ServerReady = {
     type: "ServerReady";
+  };
+
+  export type SetQuestions = {
+    type: "SetQuestions";
+    value: Question[];
+  };
+
+  export type SetPlayers = {
+    type: "SetPlayers";
+    value: Player[];
   };
 
   export type PlayerJoined = {
@@ -82,6 +106,8 @@ export namespace Event {
 
   export type All =
     | ServerReady
+    | SetQuestions
+    | SetPlayers
     | PlayerJoined
     | GameStart
     | Continue
@@ -117,14 +143,23 @@ export namespace Guard {
 }
 
 export namespace Actor {
-  export const AsyncIncrement = fromPromise(
-    async ({ input }: { input: number }) => {
-      return input + 1;
+  export const tryServerChecking = fromCallback(
+    ({ input }: { input: { ws: WebSocket; quizzID: string } }) => {
+      const interval = setInterval(() => {
+        input.ws.send(
+          JSON.stringify({
+            type: "Organizer_ServerChecking",
+            quizzID: input.quizzID,
+          }),
+        );
+      }, 1000);
+
+      return () => clearInterval(interval);
     },
   );
 
   export const map = {
-    asyncIncrement: AsyncIncrement,
+    tryServerChecking,
   };
 }
 
@@ -132,6 +167,7 @@ export const machine = setup({
   types: {
     context: {} as Context.Type,
     events: {} as Event.All,
+    input: {} as Context.Input,
   },
   actors: Actor.map,
   guards: Guard.map,
@@ -139,15 +175,37 @@ export const machine = setup({
   id: Constant.MachineID,
   initial: State.ServerChecking,
   // initial: State.Playing,
-  context: Context.initial,
+  context: Context.create,
   states: {
     [State.ServerChecking]: {
+      invoke: {
+        input: ({ context }) => ({
+          ws: context.ws,
+          quizzID: context.quizzID,
+        }),
+        src: "tryServerChecking",
+      },
       on: {
         ServerReady: State.Waiting,
       },
     },
     [State.Waiting]: {
       on: {
+        SetPlayers: {
+          actions: assign({
+            playersMap: ({ event }) => {
+              const playersMap = new Map(
+                event.value.map((player) => [player.id, player]),
+              );
+              return playersMap;
+            },
+          }),
+        },
+        SetQuestions: {
+          actions: assign({
+            questions: ({ event }) => event.value,
+          }),
+        },
         PlayerJoined: {
           actions: assign({
             playersMap: ({ context, event }) => {
@@ -159,7 +217,10 @@ export const machine = setup({
         },
         GameStart: {
           target: State.Playing,
-          guard: "allowStartGame",
+          actions: () => {
+            console.log("GameStart");
+          }
+          // guard: "allowStartGame",
         },
       },
     },
@@ -186,6 +247,21 @@ export const machine = setup({
         [State.Stopped]: {},
       },
       on: {
+        SetPlayerScore: {
+          actions: assign({
+            playersMap: ({ context, event }) => {
+              const playersMap = new Map(context.playersMap);
+              const player = playersMap.get(event.id);
+              if (player) {
+                playersMap.set(event.id, {
+                  ...player,
+                  score: event.value,
+                });
+              }
+              return playersMap;
+            },
+          }),
+        },
         Completed: State.Leaderboard,
         Finished: State.Final,
       },
@@ -217,7 +293,7 @@ export const machine = setup({
     [State.Final]: {
       on: {
         Restart: {
-          target: State.Waiting,
+          target: State.ServerChecking,
           actions: assign({
             questionIndex: () => 0,
             playersMap: () => new Map(),
